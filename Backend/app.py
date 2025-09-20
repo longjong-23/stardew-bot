@@ -2,15 +2,10 @@ import os
 import re
 import requests
 import urllib.parse
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, send_from_directory
 from threading import Lock
 
-# Tell Flask where to find templates and static files
-app = Flask(
-    __name__,
-    template_folder="Frontend",
-    static_folder="Frontend"
-)
+app = Flask(__name__, static_folder="../Frontend", template_folder="../Frontend")
 
 # ----------------------------
 # 🧠 Conversation history
@@ -103,7 +98,7 @@ def ask_ai(question):
         conversation_history.append({"role":"user","content":question})
         conversation_text = "\n".join([f"{m['role']}: {m['content']}" for m in conversation_history])
 
-    api_key = "YOUR_GEMINI_API_KEY"  # Replace with your key
+    api_key = "AIzaSyDn-Sc5L8tZBJYfDvAJTXwzNk1xVwP2jUU"  # Replace with your key
     url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
     headers = {"Content-Type":"application/json","X-goog-api-key":api_key}
     data = {"contents":[{"parts":[{"text":f"Use the following context to answer concisely with practical advice for Stardew Valley:\n{combined_context}\n\nConversation:\n{conversation_text}\n\nQuestion: {question}"}]}]}
@@ -125,10 +120,6 @@ def ask_ai(question):
 # ----------------------------
 # Flask routes
 # ----------------------------
-@app.route("/")
-def index():
-    return render_template("index.html")
-
 @app.route("/ask", methods=["POST"])
 def ask():
     data = request.json
@@ -137,6 +128,14 @@ def ask():
         return jsonify({"error": "No question provided"}), 400
     answer = ask_ai(question)
     return jsonify({"answer": answer})
+
+# Serve frontend
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_frontend(path):
+    if path != "" and os.path.exists(f"../Frontend/{path}"):
+        return send_from_directory("../Frontend", path)
+    return send_from_directory("../Frontend", "index.html")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
