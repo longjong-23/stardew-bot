@@ -2,13 +2,15 @@ import os
 import re
 import requests
 import urllib.parse
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, render_template
 from threading import Lock
 
-# ----------------------------
-# Flask app
-# ----------------------------
-app = Flask(__name__, static_folder='../Frontend')  # Adjust path if needed
+# Tell Flask where to find templates and static files
+app = Flask(
+    __name__,
+    template_folder="Frontend",
+    static_folder="Frontend"
+)
 
 # ----------------------------
 # 🧠 Conversation history
@@ -101,7 +103,7 @@ def ask_ai(question):
         conversation_history.append({"role":"user","content":question})
         conversation_text = "\n".join([f"{m['role']}: {m['content']}" for m in conversation_history])
 
-    api_key = "AIzaSyDn-Sc5L8tZBJYfDvAJTXwzNk1xVwP2jUU"  # Replace with your key
+    api_key = "YOUR_GEMINI_API_KEY"  # Replace with your key
     url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
     headers = {"Content-Type":"application/json","X-goog-api-key":api_key}
     data = {"contents":[{"parts":[{"text":f"Use the following context to answer concisely with practical advice for Stardew Valley:\n{combined_context}\n\nConversation:\n{conversation_text}\n\nQuestion: {question}"}]}]}
@@ -125,7 +127,7 @@ def ask_ai(question):
 # ----------------------------
 @app.route("/")
 def index():
-    return send_from_directory(app.static_folder, "index.html")
+    return render_template("index.html")
 
 @app.route("/ask", methods=["POST"])
 def ask():
@@ -136,8 +138,5 @@ def ask():
     answer = ask_ai(question)
     return jsonify({"answer": answer})
 
-# ----------------------------
-# Run app
-# ----------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
