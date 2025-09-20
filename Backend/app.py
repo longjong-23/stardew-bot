@@ -2,10 +2,13 @@ import os
 import re
 import requests
 import urllib.parse
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from threading import Lock
 
-app = Flask(__name__)
+# ----------------------------
+# Flask app
+# ----------------------------
+app = Flask(__name__, static_folder='../Frontend')  # Adjust path if needed
 
 # ----------------------------
 # 🧠 Conversation history
@@ -120,6 +123,10 @@ def ask_ai(question):
 # ----------------------------
 # Flask routes
 # ----------------------------
+@app.route("/")
+def index():
+    return send_from_directory(app.static_folder, "index.html")
+
 @app.route("/ask", methods=["POST"])
 def ask():
     data = request.json
@@ -129,5 +136,8 @@ def ask():
     answer = ask_ai(question)
     return jsonify({"answer": answer})
 
+# ----------------------------
+# Run app
+# ----------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
