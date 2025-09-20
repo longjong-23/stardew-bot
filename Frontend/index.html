@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stardew Valley AI Assistant</title>
+</head>
+<body>
+<h2>Stardew Valley AI Assistant</h2>
+
+<input type="text" id="question" placeholder="Ask a question..." style="width:80%">
+<button onclick="ask()">Ask</button>
+<button onclick="listen()">Speak</button>
+<button onclick="speakAnswer()">Listen</button>
+
+<p id="answer" style="white-space:pre-wrap; border:1px solid #ccc; padding:10px; width:80%"></p>
+
+<script>
+// ----------------------------
+// Browser TTS
+// ----------------------------
+let latestAnswer = "";
+
+function speakAnswer() {
+    if (!latestAnswer) return;
+    const utter = new SpeechSynthesisUtterance(latestAnswer);
+    speechSynthesis.speak(utter);
+}
+
+// ----------------------------
+// Browser Speech Recognition
+// ----------------------------
+function listen() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-US';
+    recognition.start();
+    recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        document.getElementById("question").value = text;
+        ask();
+    };
+}
+
+// ----------------------------
+// Ask AI
+// ----------------------------
+async function ask() {
+    const question = document.getElementById("question").value;
+    if (!question) return;
+
+    const res = await fetch("/ask", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({question})
+    });
+    const data = await res.json();
+    latestAnswer = data.answer;
+    document.getElementById("answer").innerText = latestAnswer;
+}
+</script>
+</body>
+</html>
+
